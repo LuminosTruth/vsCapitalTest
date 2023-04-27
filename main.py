@@ -13,24 +13,43 @@ def send_response():
     Отправляет POST-запрос на указанные URL в файле конфигурации и записывает полученные данные в БД.
     """
     for key, url in config['URL_GET'].items():
-        response = requests.post(url)
+        response = requests.get(url)
         if response.status_code == 200:
             if key == "Resource1":
-                get = response.text
-                root = ETree.fromstring(get)
-                date = convert_to_datetime(root.find("date").text)
-                data = root.find("data").text
-                connect_database.create_operation(data, date)
+                received_data = response.text
+                root = ETree.fromstring(received_data)
+                try:
+                    date = convert_to_datetime(root.find("date").text)
+                    data = root.find("data").text
+                    connect_database.create_operation(data, date)
+                except ValueError:
+                    print("URL (Resource1 вернул кривые значения")
+                except AttributeError:
+                    print("URL (Resource1) вернул не все значения")
+
             if key == "Resource2":
-                get = response.json()
-                date = convert_to_datetime(get["date"])
-                data = get["data"]
-                connect_database.create_operation(data, date)
+                received_data = response.json()
+                try:
+                    date = convert_to_datetime(received_data["date"])
+                    data = received_data["data"]
+                    connect_database.create_operation(data, date)
+                except ValueError:
+                    print("URL (Resource2) вернул кривые значения")
+                except IndexError:
+                    print("URL (Resource2) вернул не все значения")
+                except KeyError:
+                    print("URL (Resource2) вернул не все значения")
+
             if key == "Resource3":
-                get = response.text.split(" ")
-                date = convert_to_datetime(get[0])
-                data = get[1]
-                connect_database.create_operation(data, date)
+                received_data = response.text.split(" ")
+                try:
+                    date = convert_to_datetime(received_data[0])
+                    data = received_data[1]
+                    connect_database.create_operation(data, date)
+                except ValueError:
+                    print("URL (Resource3) вернул кривые значения")
+                except IndexError:
+                    print("URL (Resource3) вернул не все значения")
 
 
 def check_date_format(func):
